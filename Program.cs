@@ -1,4 +1,7 @@
 using Microsoft.OpenApi.Models;
+using AspNetBlogApi.Data; // namespace chứa AppDbContext
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,16 +9,29 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Kết nối database qua AppDbContext
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Cấu hình Identity (quản lý user + role)
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); // 👈 cái này bật giao diện Swagger UI
+    app.UseSwaggerUI(); // bật giao diện Swagger UI
 }
 
 app.UseHttpsRedirection();
+
+// Middleware cho Authentication/Authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
 var summaries = new[]
 {
